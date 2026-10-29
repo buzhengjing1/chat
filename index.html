@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>萌宠小店</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:-apple-system,"PingFang SC",sans-serif;background:#fff6ec;color:#5b4636;user-select:none;-webkit-user-select:none}
+.app{min-height:100vh;padding:14px 18px;touch-action:pan-y}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.logo{font-size:28px;font-weight:800;color:#ff8a65}
+nav{display:flex;flex-wrap:wrap;gap:6px}
+nav button,.days button,.seg button,.chips button,.pill{border:0;border-radius:999px;padding:12px 18px;font-size:17px;background:#fff;color:#5b4636;box-shadow:0 3px 0 #f2d7c2;font-weight:600}
+nav button.on,.days button.on,.seg button.on,.chips button.on{background:#ff8a65;color:#fff;box-shadow:0 3px 0 #d96a48}
+.off{background:#fff3e0;color:#e65100;padding:10px 14px;border-radius:14px;margin-bottom:10px;font-size:15px;display:none}
+.off.show{display:block}
+.card{background:#fff;border-radius:28px;padding:28px;box-shadow:0 6px 0 #f2d7c2}
+.price .pr{display:flex;justify-content:space-between;font-size:26px;padding:14px 4px;border-bottom:2px dashed #ffe0cc}
+.price b{color:#ff7043}
+.promo{height:70vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#ffe0b2,#ffccbc)}
+.promo .big{font-size:48px;font-weight:800;text-align:center;padding:20px}
+.days{display:flex;gap:4px;margin-bottom:8px;overflow-x:auto}
+.days button{display:flex;flex-direction:column;align-items:center;padding:8px 16px;border-radius:20px;flex-shrink:0}
+.days small{font-size:12px;opacity:.7}
+.legend{font-size:14px;margin:6px 0 10px;opacity:.9;display:flex;align-items:center;flex-wrap:wrap;gap:6px}
+.legend i{display:inline-block;width:14px;height:14px;border-radius:5px;vertical-align:-2px}
+.legend .book{background:#b3e5fc}.legend .walk{background:#c8e6c9}
+.legend .bad{background:#ffcdd2;outline:2px solid #ef5350}
+.legend .over{background:#ffe0b2;outline:2px solid #ff9800}
+.board{display:flex;background:#fff;border-radius:24px;padding:10px;box-shadow:0 6px 0 #f2d7c2;max-height:calc(100vh - 200px);overflow:auto}
+.axis{width:52px;font-size:12px;color:#b08f7a;flex-shrink:0}
+.lh{height:36px;font-weight:700;text-align:center;line-height:36px;color:#ff8a65;position:sticky;top:0;background:#fff;z-index:3}
+.tick{height:22px;transform:translateY(-6px)}
+.lanes{flex:1;display:flex;min-width:0}
+.lane{flex:1;border-left:2px dashed #ffe0cc;min-width:120px}
+.col{position:relative}
+.line{position:absolute;left:0;right:0;border-top:1px solid #fff3ea}.line.hr{border-top:1px solid #ffe0cc}
+.blk{position:absolute;left:4px;right:4px;border-radius:14px;padding:4px 8px 14px;font-size:12px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 3px 0 rgba(0,0,0,.08);z-index:2;touch-action:none}
+.blk b{font-size:14px}
+.blk.book{background:#b3e5fc}.blk.walk{background:#c8e6c9}
+.blk.bad{background:#ffcdd2;outline:3px solid #ef5350}
+.blk.over{background:#ffe0b2;outline:3px solid #ff9800}
+.blk.lift{transform:scale(1.04);box-shadow:0 10px 20px rgba(0,0,0,.18);z-index:5}
+.blk.bounce{animation:shake .5s}
+@keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+.grip{position:absolute;left:0;right:0;bottom:0;height:16px;background:linear-gradient(transparent 6px,rgba(0,0,0,.15) 6px,rgba(0,0,0,.15) 9px,transparent 9px) center/40px 100% no-repeat}
+.mask{position:fixed;inset:0;background:rgba(91,70,54,.35);display:flex;align-items:center;justify-content:center;z-index:20;padding:16px}
+.sheet{background:#fff;border-radius:30px;padding:22px;width:min(560px,100%);display:flex;flex-direction:column;gap:12px;max-height:90vh;overflow:auto}
+.seg{display:flex;gap:8px}.seg button{flex:1}
+.in{font-size:18px;padding:12px 16px;border-radius:16px;border:2px solid #ffe0cc;outline:0;width:100%}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.row{display:flex;align-items:center;gap:8px;font-size:16px;flex-wrap:wrap}
+.row.end{justify-content:flex-end}
+select,.num,input[type=number]{font-size:16px;padding:10px;border-radius:12px;border:2px solid #ffe0cc;background:#fff}
+.num{width:72px}
+.warn{background:#ffebee;color:#c62828;padding:10px 14px;border-radius:14px}
+.warn.orange{background:#fff3e0;color:#e65100}
+.pill.big{background:#ff8a65;color:#fff;box-shadow:0 3px 0 #d96a48;font-size:18px;padding:12px 28px}
+.pill.gray{background:#eee}.pill.undo{margin-left:auto;padding:8px 14px;font-size:14px}
+.pill.undo:disabled{opacity:.4}
+.hidden{display:none!important}
+.tip{background:#e3f2fd;color:#1565c0;padding:10px 14px;border-radius:14px;margin-bottom:10px;font-size:14px}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="tip">请用 <b>Safari</b> 打开本文件（长按文件 → 用 Safari 打开）。「快速浏览」不会运行程序，所以是空白的。</div>
+  <div class="off" id="off">📡 当前离线：还能看课表、本地登记</div>
+  <header>
+    <div class="logo">🐾 萌宠小店</div>
+    <nav>
+      <button data-tab="price" id="btnPrice">💰 价格</button>
+      <button data-tab="promo" id="btnPromo" class="on">🎉 活动</button>
+      <button data-tab="schedule" id="btnSched">📅 到店</button>
+      <button data-tab="set" id="btnSet" class="hidden">⚙️</button>
+      <button id="btnLock">🔒 店员</button>
+    </nav>
+  </header>
+
+  <section id="viewPrice" class="card price hidden"></section>
+  <section id="viewPromo" class="card promo"><div class="big" id="promoText"></div></section>
+  <section id="viewSched" class="sched hidden">
+    <div class="days" id="days"></div>
+    <div class="legend">
+      <i class="book"></i>预约 <i class="walk"></i>现场 <i class="bad"></i>同人撞车 <i class="over"></i>全店超额
+      · 点空白登记，长按积木拖动，拉底边改时长
+      <button class="pill undo" id="btnUndo" disabled>↩︎ 撤销</button>
+    </div>
+    <div class="board" id="board"></div>
+  </section>
+  <section id="viewSet" class="card hidden"></section>
+
+  <div id="pinMask" class="mask hidden">
+    <div class="sheet">
+      <h3 style="margin:0">🔒 输入店员 PIN 才能编辑</h3>
+      <input id="pinIn" class="in" type="password" inputmode="numeric" placeholder="PIN">
+      <div class="row end"><button class="pill big" id="pinGo">解锁</button></div>
+    </div>
+  </div>
+  <div id="formMask" class="mask hidden">
+    <div class="sheet" id="formSheet"></div>
+  </div>
+</div>
+<script>
+(function(){
+var SLOT=15, ROW=22;
+var cfg=JSON.parse(localStorage.getItem('cfg')||'null')||{open:9,close:20,lanes:['美容师 A','美容师 B'],pin:'1234',maxConcurrent:2};
+function saveCfg(){localStorage.setItem('cfg',JSON.stringify(cfg))}
+var tab='promo', locked=true, showPin=false, bounceId=0, drag=null, form=null;
+var undoStack=[];
+var today=new Date(); today.setHours(0,0,0,0);
+function key(d){return d.toISOString().slice(0,10)}
+function fmtDay(d){return (d.getMonth()+1)+'/'+d.getDate()}
+function wk(d){return '日一二三四五六'[d.getDay()]}
+function t(m){return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0')}
+function mask(p){return p?'****'+p.slice(-4):''}
+var day=key(today);
+var days=[]; for(var i=0;i<7;i++){var d=new Date(today); d.setDate(d.getDate()+i); days.push(d)}
+function seed(){return [
+  {id:1,date:key(today),lane:0,start:10*60,dur:45,kind:'book',pet:'豆豆',phone:'13800001234',svc:'洗澡'},
+  {id:2,date:key(today),lane:1,start:10*60+30,dur:90,kind:'walk',pet:'咪咪',phone:'13900005678',svc:'美容'},
+  {id:3,date:key(today),lane:0,start:13*60,dur:60,kind:'book',pet:'旺财',phone:'13700009999',svc:'洗护套餐'}
+]}
+var recs=JSON.parse(localStorage.getItem('recs')||'null')||seed();
+function saveRecs(){localStorage.setItem('recs',JSON.stringify(recs))}
+function snap(){return JSON.stringify(recs)}
+function dayRecs(){return recs.filter(function(r){return r.date===day})}
+function rows(){return (cfg.close-cfg.open)*60/SLOT}
+function clash(r){return dayRecs().some(function(o){return o.id!==r.id&&o.lane===r.lane&&o.start<r.start+r.dur&&r.start<o.start+o.dur})}
+function overcap(r){
+  var max=cfg.maxConcurrent||cfg.lanes.length, peak=0;
+  for(var m=r.start;m<r.start+r.dur;m+=SLOT){
+    var n=dayRecs().filter(function(o){return o.start<m+SLOT&&m<o.start+o.dur}).length;
+    if(n>peak) peak=n;
+  }
+  return peak>max;
+}
+var prices=[['小型犬洗澡',68],['中型犬洗澡',98],['大型犬洗澡',138],['猫咪洗澡',108],['造型美容','168 起'],['剪指甲',20]];
+var promos=['🛁 周三洗澡日 全场 8 折','🎂 宠物生日月 送小蛋糕','💳 储值 500 送 80'];
+var pi=0; setInterval(function(){pi=(pi+1)%promos.length; if(tab==='promo') renderPromo()},4000);
+var svcs=[['洗澡',45],['美容',90],['洗护套餐',60],['剪指甲',15]];
+var last=Date.now();
+function poke(){last=Date.now()}
+setInterval(function(){
+  if(form||drag||!document.getElementById('pinMask').classList.contains('hidden')){poke();return}
+  if(Date.now()-last>60000&&(tab!=='promo'||!locked)){tab='promo';locked=true;render()}
+},5000);
+window.addEventListener('online',function(){document.getElementById('off').classList.remove('show')});
+window.addEventListener('offline',function(){document.getElementById('off').classList.add('show')});
+if(!navigator.onLine) document.getElementById('off').classList.add('show');
+
+document.getElementById('app').addEventListener('pointerdown',poke,true);
+document.getElementById('app').addEventListener('pointermove',onMove);
+document.getElementById('app').addEventListener('pointerup',onUp);
+document.addEventListener('touchmove',function(e){if(drag&&drag.lifted) e.preventDefault()},{passive:false});
+
+function $(id){return document.getElementById(id)}
+function setTab(name){
+  tab=name;
+  ['price','promo','schedule','set'].forEach(function(n){
+    var map={price:'viewPrice',promo:'viewPromo',schedule:'viewSched',set:'viewSet'};
+    $(map[n]).classList.toggle('hidden', n!==name);
+  });
+  $('btnPrice').classList.toggle('on',name==='price');
+  $('btnPromo').classList.toggle('on',name==='promo');
+  $('btnSched').classList.toggle('on',name==='schedule');
+  $('btnSet').classList.toggle('on',name==='set');
+  $('btnSet').classList.toggle('hidden',locked);
+  $('btnLock').textContent=locked?'🔒 店员':'🔓 锁上';
+  if(name==='price') renderPrice();
+  if(name==='promo') renderPromo();
+  if(name==='schedule') renderSched();
+  if(name==='set') renderSet();
+}
+$('btnPrice').onclick=function(){setTab('price')};
+$('btnPromo').onclick=function(){setTab('promo')};
+$('btnSched').onclick=function(){setTab('schedule')};
+$('btnSet').onclick=function(){setTab('set')};
+$('btnLock').onclick=function(){
+  if(locked){ $('pinMask').classList.remove('hidden'); $('pinIn').value=''; $('pinIn').focus(); }
+  else { locked=true; if(tab==='set') setTab('schedule'); else render(); }
+};
+$('pinGo').onclick=tryPin;
+$('pinIn').onkeyup=function(e){if(e.key==='Enter')tryPin()};
+$('pinMask').onclick=function(e){if(e.target===this) this.classList.add('hidden')};
+function tryPin(){
+  var v=$('pinIn').value;
+  if(v===(cfg.pin||'1234')){
+    locked=false; $('pinMask').classList.add('hidden');
+    if((cfg.pin||'1234')==='1234'){
+      var n='';
+      while(!/^\d{4,8}$/.test(n)||n==='1234'){
+        n=prompt('第一次使用，请设一个新的店员 PIN（4–8 位数字）');
+        if(n===null){locked=true;break}
+      }
+      if(n){cfg.pin=n;saveCfg()}
+    }
+  } else alert('PIN 不对哦');
+  $('pinIn').value=''; render();
+}
+$('btnUndo').onclick=function(){
+  var s=undoStack.pop(); if(s){recs=JSON.parse(s);saveRecs();renderSched()}
+};
+
+function render(){setTab(tab)}
+function renderPromo(){$('promoText').textContent=promos[pi]}
+function renderPrice(){
+  $('viewPrice').innerHTML='<h2>价格表</h2>'+prices.map(function(p){return '<div class="pr"><span>'+p[0]+'</span><b>¥'+p[1]+'</b></div>'}).join('');
+}
+function renderSet(){
+  $('viewSet').innerHTML='<h2>店铺设置</h2>'+
+    '<label>店员 PIN <input id="cfgPin" class="in" style="width:120px;display:inline-block" type="'+(showPin?'text':'password')+'" value="'+cfg.pin+'"> <button class="pill" id="togPin">'+(showPin?'隐藏':'显示')+'</button></label><br><br>'+
+    '<label>全店同时最多接待 <input type="number" min="1" id="cfgMax" class="num" value="'+cfg.maxConcurrent+'"> 只</label><br><br>'+
+    '<label>营业 <input type="number" id="cfgOpen" class="num" value="'+cfg.open+'"> 点 到 <input type="number" id="cfgClose" class="num" value="'+cfg.close+'"> 点</label>'+
+    '<h3>同时接待（列）</h3><div id="laneList"></div><button class="pill" id="addLane">+ 加一列</button>';
+  var ll=$('laneList');
+  cfg.lanes.forEach(function(l,i){
+    var row=document.createElement('div'); row.className='row';
+    row.innerHTML='<input class="in" style="flex:1" value="'+l+'" data-i="'+i+'"><button class="pill gray" data-del="'+i+'">删</button>';
+    ll.appendChild(row);
+  });
+  $('togPin').onclick=function(){showPin=!showPin;renderSet()};
+  $('cfgPin').onchange=function(){cfg.pin=this.value;saveCfg()};
+  $('cfgMax').onchange=function(){cfg.maxConcurrent=+this.value;saveCfg()};
+  $('cfgOpen').onchange=function(){cfg.open=+this.value;saveCfg();render()};
+  $('cfgClose').onchange=function(){cfg.close=+this.value;saveCfg();render()};
+  ll.querySelectorAll('input').forEach(function(inp){inp.onchange=function(){cfg.lanes[+this.dataset.i]=this.value;saveCfg();render()}});
+  ll.querySelectorAll('[data-del]').forEach(function(b){b.onclick=function(){cfg.lanes.splice(+this.dataset.del,1);saveCfg();render()}});
+  $('addLane').onclick=function(){cfg.lanes.push('美容师 '+ 'ABCDEFG'[cfg.lanes.length]);saveCfg();render()};
+}
+function renderSched(){
+  var dhtml=days.map(function(d){
+    var k=key(d), on=k===day?'on':'';
+    return '<button class="'+on+'" data-day="'+k+'"><small>周'+wk(d)+'</small>'+fmtDay(d)+'</button>';
+  }).join('');
+  $('days').innerHTML=dhtml;
+  $('days').querySelectorAll('button').forEach(function(b){b.onclick=function(){day=this.dataset.day;renderSched()}});
+  $('btnUndo').disabled=!undoStack.length;
+
+  var r=rows();
+  var axis='<div class="axis"><div class="lh"></div>';
+  for(var i=0;i<r;i++){axis+='<div class="tick">'+(i%4===0?t(cfg.open*60+i*SLOT):'')+'</div>'}
+  axis+='</div>';
+  var lanesHtml='<div class="lanes" id="lanes">';
+  cfg.lanes.forEach(function(ln,li){
+    lanesHtml+='<div class="lane"><div class="lh">'+ln+'</div><div class="col" data-lane="'+li+'" style="height:'+(r*ROW)+'px">';
+    for(var i=0;i<r;i++) lanesHtml+='<div class="line'+(i%4===0?' hr':'')+'" style="top:'+(i*ROW)+'px"></div>';
+    dayRecs().filter(function(x){return x.lane===li}).forEach(function(rec){
+      var cls=['blk',rec.kind];
+      if(clash(rec)) cls.push('bad'); else if(overcap(rec)) cls.push('over');
+      if(bounceId===rec.id) cls.push('bounce');
+      lanesHtml+='<div class="'+cls.join(' ')+'" data-id="'+rec.id+'" style="top:'+((rec.start-cfg.open*60)/SLOT*ROW)+'px;height:'+(rec.dur/SLOT*ROW-3)+'px">'+
+        '<b>'+(rec.kind==='book'?'📌':'🚶')+' '+rec.pet+'</b>'+
+        '<span>'+t(rec.start)+'–'+t(rec.start+rec.dur)+' · '+rec.svc+'</span>'+
+        '<span>'+mask(rec.phone)+'</span><div class="grip" data-resize="1"></div></div>';
+    });
+    lanesHtml+='</div></div>';
+  });
+  lanesHtml+='</div>';
+  $('board').innerHTML=axis+lanesHtml;
+  $('board').querySelectorAll('.col').forEach(function(col){
+    col.onclick=function(e){
+      if(e.target.closest('.blk')) return;
+      if(locked){$('pinMask').classList.remove('hidden');return}
+      var y=e.clientY-col.getBoundingClientRect().top;
+      var start=cfg.open*60+Math.floor(y/ROW)*SLOT;
+      openForm({id:0,date:day,lane:+col.dataset.lane,start:start,dur:45,kind:'walk',pet:'',phone:'',svc:'洗澡'});
+    };
+  });
+  $('board').querySelectorAll('.blk').forEach(function(el){
+    el.addEventListener('pointerdown',function(e){
+      var mode=e.target.classList.contains('grip')?'resize':'move';
+      down(e, +el.dataset.id, mode);
+    });
+  });
+}
+function findRec(id){return recs.find(function(r){return r.id===id})}
+function down(e,id,mode){
+  e.stopPropagation(); e.preventDefault();
+  if(locked) return;
+  var r=findRec(id); if(!r) return;
+  drag={r:r,mode:mode,y:e.clientY,x:e.clientX,s:r.start,l:r.lane,d:r.dur,lifted:mode==='resize',moved:false,before:snap(),el:e.currentTarget};
+  if(mode!=='resize'){
+    drag.timer=setTimeout(function(){if(drag){drag.lifted=true;drag.el.classList.add('lift');navigator.vibrate&&navigator.vibrate(30)}},500);
+  }
+  try{e.currentTarget.setPointerCapture(e.pointerId)}catch(err){}
+}
+function onMove(e){
+  if(!drag) return;
+  var dy=e.clientY-drag.y, dx=e.clientX-drag.x;
+  if(!drag.lifted){ if(Math.abs(dy)>8||Math.abs(dx)>8){clearTimeout(drag.timer);drag=null} return }
+  drag.moved=true;
+  if(drag.mode==='resize'){
+    drag.r.dur=Math.max(SLOT, Math.min(cfg.close*60-drag.r.start, drag.d+Math.round(dy/ROW)*SLOT));
+  } else {
+    var lanesEl=$('lanes'); if(!lanesEl) return;
+    var laneW=lanesEl.clientWidth/cfg.lanes.length;
+    var ns=drag.s+Math.round(dy/ROW)*SLOT;
+    drag.r.start=Math.max(cfg.open*60, Math.min(cfg.close*60-drag.r.dur, ns));
+    drag.r.lane=Math.max(0, Math.min(cfg.lanes.length-1, drag.l+Math.round(dx/laneW)));
+  }
+  // live redraw lightly
+  var el=document.querySelector('.blk[data-id="'+drag.r.id+'"]');
+  if(el){
+    el.style.top=((drag.r.start-cfg.open*60)/SLOT*ROW)+'px';
+    el.style.height=(drag.r.dur/SLOT*ROW-3)+'px';
+    el.classList.toggle('bad', clash(drag.r));
+  }
+}
+function onUp(){
+  if(!drag) return;
+  clearTimeout(drag.timer);
+  var r=drag.r;
+  if(drag.el) drag.el.classList.remove('lift');
+  if(!drag.lifted&&!drag.moved) openForm(Object.assign({},r));
+  else if(drag.moved){
+    if(clash(r)){ r.start=drag.s; r.lane=drag.l; r.dur=drag.d; bounceId=r.id; setTimeout(function(){bounceId=0;renderSched()},600); }
+    else undoStack.push(drag.before);
+    saveRecs();
+  }
+  drag=null; renderSched();
+}
+function openForm(f){ form=f; renderForm(); $('formMask').classList.remove('hidden') }
+function renderForm(){
+  var f=form; if(!f) return;
+  var opts=''; for(var i=0;i<rows();i++){var m=cfg.open*60+i*SLOT; opts+='<option value="'+m+'"'+(m===f.start?' selected':'')+'>'+t(m)+'</option>'}
+  var lanes=cfg.lanes.map(function(l,i){return '<option value="'+i+'"'+(i===f.lane?' selected':'')+'>'+l+'</option>'}).join('');
+  var chips=svcs.map(function(s){return '<button class="'+(f.svc===s[0]?'on':'')+'" data-svc="'+s[0]+'" data-dur="'+s[1]+'">'+s[0]+'</button>'}).join('');
+  $('formSheet').innerHTML=
+    '<div class="seg"><button class="'+(f.kind==='book'?'on':'')+'" data-kind="book">📌 预约</button><button class="'+(f.kind==='walk'?'on':'')+'" data-kind="walk">🚶 现场</button></div>'+
+    '<input class="in" id="fPet" placeholder="🐶 宠物名字" value="'+(f.pet||'')+'">'+
+    '<input class="in" id="fPhone" placeholder="📱 手机号" value="'+(f.phone||'')+'" inputmode="tel">'+
+    '<div class="chips">'+chips+'</div>'+
+    '<div class="row"><select id="fStart">'+opts+'</select> 时长 <input type="number" step="15" min="15" class="num" id="fDur" value="'+f.dur+'"> 分钟 <select id="fLane">'+lanes+'</select></div>'+
+    (clash(f)?'<div class="warn">⚠️ 这个时段 '+cfg.lanes[f.lane]+' 已经有安排啦</div>':(overcap(f)?'<div class="warn orange">⚠️ 全店已超过可接待数量，仍可保存</div>':''))+
+    '<div class="row end">'+(f.id?'<button class="pill gray" id="fDel">删除</button>':'')+'<button class="pill big" id="fSave">✅ 好了</button></div>';
+  $('formSheet').querySelectorAll('[data-kind]').forEach(function(b){b.onclick=function(){form.kind=this.dataset.kind;renderForm()}});
+  $('formSheet').querySelectorAll('[data-svc]').forEach(function(b){b.onclick=function(){form.svc=this.dataset.svc;form.dur=+this.dataset.dur;renderForm()}});
+  $('fStart').onchange=function(){form.start=+this.value;renderForm()};
+  $('fDur').onchange=function(){form.dur=+this.value;renderForm()};
+  $('fLane').onchange=function(){form.lane=+this.value;renderForm()};
+  $('fPet').oninput=function(){form.pet=this.value};
+  $('fPhone').oninput=function(){form.phone=this.value};
+  $('fSave').onclick=saveForm;
+  var del=$('fDel'); if(del) del.onclick=function(){undoStack.push(snap());recs=recs.filter(function(r){return r.id!==form.id});saveRecs();form=null;$('formMask').classList.add('hidden');renderSched()};
+}
+$('formMask').onclick=function(e){if(e.target===this){form=null;this.classList.add('hidden')}};
+function saveForm(){
+  if(!form.pet){alert('写一下宠物名字哦');return}
+  if(clash(form)){alert('这个时段已经有安排啦');return}
+  undoStack.push(snap());
+  if(form.id){ var t=findRec(form.id); Object.assign(t,form); }
+  else { form.id=Date.now(); recs.push(Object.assign({},form)); }
+  saveRecs(); form=null; $('formMask').classList.add('hidden'); renderSched();
+}
+setInterval(function(){var n=new Date(); if(n.getHours()===3&&n.getMinutes()===0) location.reload()},60000);
+render();
+})();
+</script>
+</body>
+</html>
